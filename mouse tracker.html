@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mouse Tracker Animation with Color Selection</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #colorControls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        label {
+            color: white;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" aria-label="Mouse tracker animation" role="img"></canvas>
+    <div id="colorControls">
+        <label for="startColor">Start Color:</label>
+        <input type="color" id="startColor" value="#ffffff">
+        <label for="endColor">End Color:</label>
+        <input type="color" id="endColor" value="#ff00ff">
+    </div>
+
+    
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const startColorInput = document.getElementById('startColor');
+        const endColorInput = document.getElementById('endColor');
+
+        let width, height;
+        let trail = [];
+        const trailLength = 50;
+
+        function resizeCanvas() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+
+        function interpolateColor(color1, color2, factor) {
+            const result = color1.slice();
+            for (let i = 0; i < 3; i++) {
+                result[i] = Math.round(result[i] + factor * (color2[i] - color1[i]));
+            }
+            return result;
+        }
+
+        function hexToRgb(hex) {
+            const bigint = parseInt(hex.slice(1), 16);
+            return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+        }
+
+        function drawTrail() {
+            ctx.clearRect(0, 0, width, height);
+
+            const startColor = hexToRgb(startColorInput.value);
+            const endColor = hexToRgb(endColorInput.value);
+
+            for (let i = 0; i < trail.length; i++) {
+                const point = trail[i];
+                const size = 20 * (1 - i / trailLength);
+                const alpha = 1 - i / trailLength;
+                const color = interpolateColor(startColor, endColor, i / trailLength);
+
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${alpha})`;
+                ctx.fill();
+            }
+
+            requestAnimationFrame(drawTrail);
+        }
+
+        function handleMouseMove(e) {
+            trail.unshift({ x: e.clientX, y: e.clientY });
+            if (trail.length > trailLength) {
+                trail.pop();
+            }
+        }
+
+        function init() {
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            window.addEventListener('mousemove', handleMouseMove);
+            drawTrail();
+        }
+
+        init();
+    </script>
+</body>
+</html>
